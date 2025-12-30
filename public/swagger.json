@@ -181,6 +181,295 @@
         }
       }
     },
+    "/api/customers/{id}": {
+      "get": {
+        "summary": "Get customer by ID",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer details"
+          },
+          "404": {
+            "description": "Customer not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update customer",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customer_name": {
+                    "type": "string"
+                  },
+                  "customer_code": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "city_or_district": {
+                    "type": "string"
+                  },
+                  "sales_rep": {
+                    "type": "string"
+                  },
+                  "country": {
+                    "type": "string"
+                  },
+                  "region_or_state": {
+                    "type": "string"
+                  },
+                  "telephone_number": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "contact_person": {
+                    "type": "string"
+                  },
+                  "payment_terms_limit": {
+                    "type": "number"
+                  },
+                  "balance_risk_limit": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Customer updated successfully"
+          },
+          "404": {
+            "description": "Customer not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete customer",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer deleted successfully"
+          },
+          "404": {
+            "description": "Customer not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/customers": {
+      "get": {
+        "summary": "Get all customers",
+        "description": "Retrieve a list of all customers with pagination and filtering",
+        "tags": [
+          "Customers"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            },
+            "description": "Items per page"
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search in customer name or code"
+          },
+          {
+            "in": "query",
+            "name": "country",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by country"
+          },
+          {
+            "in": "query",
+            "name": "sales_rep",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by sales representative"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of customers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "totalPages": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new customer",
+        "description": "Add a new customer to the system",
+        "tags": [
+          "Customers"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "customer_name",
+                  "customer_code"
+                ],
+                "properties": {
+                  "customer_name": {
+                    "type": "string"
+                  },
+                  "customer_code": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  },
+                  "city_or_district": {
+                    "type": "string"
+                  },
+                  "sales_rep": {
+                    "type": "string"
+                  },
+                  "country": {
+                    "type": "string"
+                  },
+                  "region_or_state": {
+                    "type": "string"
+                  },
+                  "telephone_number": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "contact_person": {
+                    "type": "string"
+                  },
+                  "payment_terms_limit": {
+                    "type": "number"
+                  },
+                  "balance_risk_limit": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Customer created successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
     "/api/example": {
       "get": {
         "summary": "Example GET endpoint",
@@ -274,6 +563,234 @@
           },
           "400": {
             "description": "Invalid request data"
+          }
+        }
+      }
+    },
+    "/api/fixed-costs/{id}": {
+      "get": {
+        "summary": "Get fixed cost by ID",
+        "tags": [
+          "Fixed Costs"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fixed cost details"
+          },
+          "404": {
+            "description": "Fixed cost not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update fixed cost",
+        "tags": [
+          "Fixed Costs"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cost_name": {
+                    "type": "string"
+                  },
+                  "month": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Fixed cost updated successfully"
+          },
+          "404": {
+            "description": "Fixed cost not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete fixed cost",
+        "tags": [
+          "Fixed Costs"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fixed cost deleted successfully"
+          },
+          "404": {
+            "description": "Fixed cost not found"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/fixed-costs": {
+      "get": {
+        "summary": "Get all fixed costs",
+        "description": "Retrieve a list of all fixed costs with pagination and filtering",
+        "tags": [
+          "Fixed Costs"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            },
+            "description": "Items per page"
+          },
+          {
+            "in": "query",
+            "name": "month",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by month"
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search in cost name"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of fixed costs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "totalPages": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new fixed cost",
+        "description": "Add a new fixed cost entry",
+        "tags": [
+          "Fixed Costs"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "cost_name",
+                  "month",
+                  "amount"
+                ],
+                "properties": {
+                  "cost_name": {
+                    "type": "string"
+                  },
+                  "month": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Fixed cost created successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "500": {
+            "description": "Server error"
           }
         }
       }

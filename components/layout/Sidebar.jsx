@@ -11,7 +11,8 @@ import {
   AlertTriangle, 
   BarChart3, 
   User,
-  X
+  X,
+  Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -19,6 +20,8 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Products', href: '/products', icon: Package },
   { name: 'Product Costs', href: '/product-costs', icon: DollarSign },
+  { name: 'Fixed Costs', href: '/fixed-costs', icon: DollarSign },
+  { name: 'Customers', href: '/customers', icon: Users },
   { name: 'Low Stock', href: '/low-stock', icon: AlertTriangle },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Profile', href: '/profile', icon: User },

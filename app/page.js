@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Package, BarChart3, Shield, Zap, DollarSign } from 'lucide-react';
+import { Package, BarChart3, Shield, Zap, DollarSign, Receipt, Users } from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
@@ -93,6 +93,22 @@ export default function HomePage() {
             <h3 className="text-lg font-semibold mb-2">Product Costs</h3>
             <p className="text-gray-600">
               Track and manage product unit costs by month for better pricing decisions
+            </p>
+          </Card>
+
+          <Card className="p-6">
+            <Receipt className="h-12 w-12 text-indigo-600 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Fixed Costs</h3>
+            <p className="text-gray-600">
+              Track and manage monthly fixed costs for better budgeting and cost control
+            </p>
+          </Card>
+
+          <Card className="p-6">
+            <Users className="h-12 w-12 text-teal-600 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Customers</h3>
+            <p className="text-gray-600">
+              Manage customer information, contacts, and payment terms in one place
             </p>
           </Card>
         </div>
