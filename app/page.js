@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Package, BarChart3, Shield, Zap } from 'lucide-react';
+import { Package, BarChart3, Shield, Zap, DollarSign } from 'lucide-react';
 
 export default function HomePage() {
   const router = useRouter();
@@ -85,6 +85,14 @@ export default function HomePage() {
             <h3 className="text-lg font-semibold mb-2">Audit Trail</h3>
             <p className="text-gray-600">
               Complete history of all product changes with user attribution
+            </p>
+          </Card>
+
+          <Card className="p-6">
+            <DollarSign className="h-12 w-12 text-yellow-600 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Product Costs</h3>
+            <p className="text-gray-600">
+              Track and manage product unit costs by month for better pricing decisions
             </p>
           </Card>
         </div>

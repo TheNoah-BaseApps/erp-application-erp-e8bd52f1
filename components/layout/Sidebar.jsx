@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { 
   LayoutDashboard, 
   Package, 
+  DollarSign,
   AlertTriangle, 
   BarChart3, 
   User,
@@ -17,6 +18,7 @@ import { Button } from '@/components/ui/button';
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Products', href: '/products', icon: Package },
+  { name: 'Product Costs', href: '/product-costs', icon: DollarSign },
   { name: 'Low Stock', href: '/low-stock', icon: AlertTriangle },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Profile', href: '/profile', icon: User },
