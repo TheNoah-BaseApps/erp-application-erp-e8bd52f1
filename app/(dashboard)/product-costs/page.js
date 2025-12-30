@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -28,20 +29,26 @@ import {
   Edit,
   Trash2,
   Plus,
-  Search
+  Search,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function ProductCostsPage() {
+  const router = useRouter();
   const [costs, setCosts] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCost, setSelectedCost] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [stats, setStats] = useState({
     totalEntries: 0,
     avgCost: 0,
@@ -61,20 +68,67 @@ export default function ProductCostsPage() {
     fetchProducts();
   }, []);
 
+  function getAuthHeader() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      throw new Error('No authentication token found');
+    }
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  function handleAuthError(response) {
+    if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem('token');
+      toast.error('Session expired. Please login again.');
+      router.push('/login');
+      return true;
+    }
+    return false;
+  }
+
+  async function fetchWithRetry(url, options = {}, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const response = await fetch(url, {
+          ...options,
+          headers: getAuthHeader()
+        });
+
+        if (handleAuthError(response)) {
+          throw new Error('Authentication failed');
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return await response.json();
+      } catch (error) {
+        if (i === retries - 1) throw error;
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+      }
+    }
+  }
+
   async function fetchCosts() {
     try {
       setLoading(true);
-      const response = await fetch('/api/product-costs');
-      const data = await response.json();
+      setError(null);
+      const data = await fetchWithRetry('/api/product-costs');
       
       if (data.success) {
         setCosts(data.data);
         calculateStats(data.data);
       } else {
-        toast.error('Failed to load product costs');
+        throw new Error(data.error || 'Failed to load product costs');
       }
     } catch (error) {
       console.error('Error fetching costs:', error);
+      setError('Failed to load product costs. Please try again.');
       toast.error('Error loading product costs');
     } finally {
       setLoading(false);
@@ -83,14 +137,14 @@ export default function ProductCostsPage() {
 
   async function fetchProducts() {
     try {
-      const response = await fetch('/api/products?limit=1000');
-      const data = await response.json();
+      const data = await fetchWithRetry('/api/products?limit=1000');
       
       if (data.success) {
         setProducts(data.data);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
+      toast.error('Error loading products');
     }
   }
 
@@ -119,6 +173,7 @@ export default function ProductCostsPage() {
     }
 
     try {
+      setSubmitting(true);
       const url = selectedCost 
         ? `/api/product-costs/${selectedCost.id}`
         : '/api/product-costs';
@@ -127,9 +182,17 @@ export default function ProductCostsPage() {
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeader(),
         body: JSON.stringify(formData)
       });
+
+      if (handleAuthError(response)) {
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
 
@@ -140,11 +203,13 @@ export default function ProductCostsPage() {
         resetForm();
         fetchCosts();
       } else {
-        toast.error(data.error || 'Operation failed');
+        throw new Error(data.error || 'Operation failed');
       }
     } catch (error) {
       console.error('Error saving cost:', error);
-      toast.error('Error saving cost');
+      toast.error(error.message || 'Error saving cost');
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -155,8 +220,17 @@ export default function ProductCostsPage() {
 
     try {
       const response = await fetch(`/api/product-costs/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeader()
       });
+
+      if (handleAuthError(response)) {
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
 
@@ -164,11 +238,11 @@ export default function ProductCostsPage() {
         toast.success('Cost deleted successfully');
         fetchCosts();
       } else {
-        toast.error(data.error || 'Failed to delete cost');
+        throw new Error(data.error || 'Failed to delete cost');
       }
     } catch (error) {
       console.error('Error deleting cost:', error);
-      toast.error('Error deleting cost');
+      toast.error(error.message || 'Error deleting cost');
     }
   }
 
@@ -192,6 +266,11 @@ export default function ProductCostsPage() {
     setIsAddModalOpen(true);
   }
 
+  function handleRetry() {
+    fetchCosts();
+    fetchProducts();
+  }
+
   const filteredCosts = costs.filter(cost => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -205,6 +284,28 @@ export default function ProductCostsPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription className="mt-2">
+            {error}
+          </AlertDescription>
+          <Button 
+            onClick={handleRetry} 
+            variant="outline" 
+            className="mt-4"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </Alert>
       </div>
     );
   }
@@ -385,6 +486,7 @@ export default function ProductCostsPage() {
                 onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
                 className="w-full px-3 py-2 border rounded-md"
                 required
+                disabled={submitting}
               >
                 <option value="">Select a product</option>
                 {products.map((product) => (
@@ -403,6 +505,7 @@ export default function ProductCostsPage() {
                 value={formData.month}
                 onChange={(e) => setFormData({ ...formData, month: e.target.value })}
                 required
+                disabled={submitting}
               />
             </div>
 
@@ -416,6 +519,7 @@ export default function ProductCostsPage() {
                 value={formData.unit_cost}
                 onChange={(e) => setFormData({ ...formData, unit_cost: e.target.value })}
                 required
+                disabled={submitting}
               />
             </div>
 
@@ -424,10 +528,20 @@ export default function ProductCostsPage() {
                 type="button"
                 variant="outline"
                 onClick={() => setIsAddModalOpen(false)}
+                disabled={submitting}
               >
                 Cancel
               </Button>
-              <Button type="submit">Add Cost Entry</Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    Adding...
+                  </>
+                ) : (
+                  'Add Cost Entry'
+                )}
+              </Button>
             </div>
           </form>
         </DialogContent>
@@ -451,6 +565,7 @@ export default function ProductCostsPage() {
                 onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
                 className="w-full px-3 py-2 border rounded-md"
                 required
+                disabled={submitting}
               >
                 <option value="">Select a product</option>
                 {products.map((product) => (
@@ -469,6 +584,7 @@ export default function ProductCostsPage() {
                 value={formData.month}
                 onChange={(e) => setFormData({ ...formData, month: e.target.value })}
                 required
+                disabled={submitting}
               />
             </div>
 
@@ -482,6 +598,7 @@ export default function ProductCostsPage() {
                 value={formData.unit_cost}
                 onChange={(e) => setFormData({ ...formData, unit_cost: e.target.value })}
                 required
+                disabled={submitting}
               />
             </div>
 
@@ -490,10 +607,20 @@ export default function ProductCostsPage() {
                 type="button"
                 variant="outline"
                 onClick={() => setIsEditModalOpen(false)}
+                disabled={submitting}
               >
                 Cancel
               </Button>
-              <Button type="submit">Update Cost Entry</Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update Cost Entry'
+                )}
+              </Button>
             </div>
           </form>
         </DialogContent>

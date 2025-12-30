@@ -285,6 +285,11 @@
         "tags": [
           "Product Costs"
         ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "in": "path",
@@ -300,6 +305,9 @@
           "200": {
             "description": "Product cost details retrieved successfully"
           },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          },
           "404": {
             "description": "Product cost not found"
           },
@@ -310,9 +318,14 @@
       },
       "put": {
         "summary": "Update a product cost entry",
-        "description": "Update an existing product cost record",
+        "description": "Update an existing product cost record (Admin only)",
         "tags": [
           "Product Costs"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -353,6 +366,12 @@
           "400": {
             "description": "Invalid input data"
           },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          },
+          "403": {
+            "description": "Forbidden - Admin access required"
+          },
           "404": {
             "description": "Product cost not found"
           },
@@ -363,9 +382,14 @@
       },
       "delete": {
         "summary": "Delete a product cost entry",
-        "description": "Remove a product cost record from the system",
+        "description": "Remove a product cost record from the system (Admin only)",
         "tags": [
           "Product Costs"
+        ],
+        "security": [
+          {
+            "BearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -382,6 +406,12 @@
           "200": {
             "description": "Product cost deleted successfully"
           },
+          "401": {
+            "description": "Unauthorized - Invalid or missing authentication"
+          },
+          "403": {
+            "description": "Forbidden - Admin access required"
+          },
           "404": {
             "description": "Product cost not found"
           },
@@ -397,6 +427,11 @@
         "description": "Retrieve all product cost entries with optional filtering by product_id or month",
         "tags": [
           "Product Costs"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "parameters": [
           {
@@ -479,6 +514,12 @@
               }
             }
           },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Admin access required"
+          },
           "500": {
             "description": "Server error"
           }
@@ -489,6 +530,11 @@
         "description": "Add a new product cost record for a specific month",
         "tags": [
           "Product Costs"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
         ],
         "requestBody": {
           "required": true,
@@ -525,6 +571,15 @@
           },
           "400": {
             "description": "Invalid input data"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Admin access required"
+          },
+          "404": {
+            "description": "Product not found"
           },
           "500": {
             "description": "Server error"

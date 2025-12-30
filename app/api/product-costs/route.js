@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/database/aurora';
+import { verifyToken } from '@/lib/auth/jwt';
 
 /**
  * @swagger
@@ -8,6 +9,8 @@ import { query } from '@/lib/database/aurora';
  *     summary: Get all product costs
  *     description: Retrieve all product cost entries with optional filtering by product_id or month
  *     tags: [Product Costs]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: query
  *         name: product_id
@@ -60,11 +63,47 @@ import { query } from '@/lib/database/aurora';
  *                         type: string
  *                 total:
  *                   type: integer
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *       403:
+ *         description: Forbidden - Admin access required
  *       500:
  *         description: Server error
  */
 export async function GET(request) {
   try {
+    // Verify authentication
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('Missing or invalid authorization header');
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Authorization header required' 
+      }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+    let decoded;
+    
+    try {
+      decoded = await verifyToken(token);
+    } catch (error) {
+      console.error('Token verification failed:', error.message);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid or expired token' 
+      }, { status: 401 });
+    }
+
+    // Verify admin role
+    if (decoded.role !== 'admin') {
+      console.error(`Access denied for user ${decoded.userId} with role ${decoded.role}`);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Admin access required' 
+      }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const productId = searchParams.get('product_id');
     const month = searchParams.get('month');
@@ -95,7 +134,16 @@ export async function GET(request) {
     queryText += ` ORDER BY pc.month DESC, pc.created_at DESC LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}`;
     params.push(limit, offset);
 
-    const result = await query(queryText, params);
+    let result;
+    try {
+      result = await query(queryText, params);
+    } catch (error) {
+      console.error('Database query error fetching product costs:', error);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Failed to fetch product costs from database' 
+      }, { status: 500 });
+    }
 
     // Get total count
     let countQuery = 'SELECT COUNT(*) FROM product_costs WHERE 1=1';
@@ -114,7 +162,17 @@ export async function GET(request) {
       countParams.push(month);
     }
 
-    const countResult = await query(countQuery, countParams);
+    let countResult;
+    try {
+      countResult = await query(countQuery, countParams);
+    } catch (error) {
+      console.error('Database query error fetching product costs count:', error);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Failed to fetch product costs count from database' 
+      }, { status: 500 });
+    }
+
     const total = parseInt(countResult.rows[0].count);
 
     return NextResponse.json({ 
@@ -123,10 +181,10 @@ export async function GET(request) {
       total 
     });
   } catch (error) {
-    console.error('Error fetching product costs:', error);
+    console.error('Unexpected error in GET /api/product-costs:', error);
     return NextResponse.json({ 
       success: false, 
-      error: error.message 
+      error: 'An unexpected error occurred' 
     }, { status: 500 });
   }
 }
@@ -138,6 +196,8 @@ export async function GET(request) {
  *     summary: Create a new product cost entry
  *     description: Add a new product cost record for a specific month
  *     tags: [Product Costs]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -163,15 +223,64 @@ export async function GET(request) {
  *         description: Product cost created successfully
  *       400:
  *         description: Invalid input data
+ *       401:
+ *         description: Unauthorized - Invalid or missing token
+ *       403:
+ *         description: Forbidden - Admin access required
+ *       404:
+ *         description: Product not found
  *       500:
  *         description: Server error
  */
 export async function POST(request) {
   try {
-    const body = await request.json();
+    // Verify authentication
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.error('Missing or invalid authorization header');
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Authorization header required' 
+      }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+    let decoded;
+    
+    try {
+      decoded = await verifyToken(token);
+    } catch (error) {
+      console.error('Token verification failed:', error.message);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid or expired token' 
+      }, { status: 401 });
+    }
+
+    // Verify admin role
+    if (decoded.role !== 'admin') {
+      console.error(`Access denied for user ${decoded.userId} with role ${decoded.role}`);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Admin access required' 
+      }, { status: 403 });
+    }
+
+    let body;
+    try {
+      body = await request.json();
+    } catch (error) {
+      console.error('Invalid JSON in request body:', error);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid JSON in request body' 
+      }, { status: 400 });
+    }
+
     const { product_id, month, unit_cost } = body;
 
     if (!product_id || !month || unit_cost === undefined) {
+      console.error('Missing required fields:', { product_id, month, unit_cost });
       return NextResponse.json({ 
         success: false, 
         error: 'Missing required fields: product_id, month, unit_cost' 
@@ -181,41 +290,80 @@ export async function POST(request) {
     // Validate month format (YYYY-MM)
     const monthRegex = /^\d{4}-\d{2}$/;
     if (!monthRegex.test(month)) {
+      console.error('Invalid month format:', month);
       return NextResponse.json({ 
         success: false, 
         error: 'Invalid month format. Use YYYY-MM format' 
       }, { status: 400 });
     }
 
+    // Validate unit_cost is a number
+    const parsedCost = parseFloat(unit_cost);
+    if (isNaN(parsedCost) || parsedCost < 0) {
+      console.error('Invalid unit_cost value:', unit_cost);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'unit_cost must be a valid positive number' 
+      }, { status: 400 });
+    }
+
     // Check if product exists
-    const productCheck = await query(
-      'SELECT id FROM products WHERE id = $1',
-      [product_id]
-    );
+    let productCheck;
+    try {
+      productCheck = await query(
+        'SELECT id FROM products WHERE id = $1',
+        [product_id]
+      );
+    } catch (error) {
+      console.error('Database error checking product existence:', error);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Failed to verify product existence' 
+      }, { status: 500 });
+    }
 
     if (productCheck.rows.length === 0) {
+      console.error('Product not found:', product_id);
       return NextResponse.json({ 
         success: false, 
         error: 'Product not found' 
       }, { status: 404 });
     }
 
-    const result = await query(
-      `INSERT INTO product_costs (product_id, month, unit_cost, created_at, updated_at) 
-       VALUES ($1, $2, $3, NOW(), NOW()) 
-       RETURNING *`,
-      [product_id, month, parseFloat(unit_cost)]
-    );
+    let result;
+    try {
+      result = await query(
+        `INSERT INTO product_costs (product_id, month, unit_cost, created_at, updated_at) 
+         VALUES ($1, $2, $3, NOW(), NOW()) 
+         RETURNING *`,
+        [product_id, month, parsedCost]
+      );
+    } catch (error) {
+      console.error('Database error creating product cost:', error);
+      
+      // Check for unique constraint violation
+      if (error.code === '23505') {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Product cost entry for this month already exists' 
+        }, { status: 400 });
+      }
+      
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Failed to create product cost entry' 
+      }, { status: 500 });
+    }
 
     return NextResponse.json({ 
       success: true, 
       data: result.rows[0] 
     }, { status: 201 });
   } catch (error) {
-    console.error('Error creating product cost:', error);
+    console.error('Unexpected error in POST /api/product-costs:', error);
     return NextResponse.json({ 
       success: false, 
-      error: error.message 
+      error: 'An unexpected error occurred' 
     }, { status: 500 });
   }
 }
