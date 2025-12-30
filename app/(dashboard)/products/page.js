@@ -10,7 +10,7 @@ import BulkUploadDialog from '@/components/products/BulkUploadDialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { Plus } from 'lucide-react';
+import { Package, Plus, Search, Filter, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ProductsPage() {
