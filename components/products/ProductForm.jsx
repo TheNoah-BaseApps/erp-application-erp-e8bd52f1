@@ -41,8 +41,8 @@ export default function ProductForm({ mode = 'create', initialData = null, produ
   const [formData, setFormData] = useState({
     product_name: '',
     product_code: '',
-    product_category: '',
-    unit: '',
+    product_category: undefined,
+    unit: undefined,
     critical_stock_level: '',
     brand: '',
     is_active: true
@@ -53,8 +53,8 @@ export default function ProductForm({ mode = 'create', initialData = null, produ
       setFormData({
         product_name: initialData.product_name || '',
         product_code: initialData.product_code || '',
-        product_category: initialData.product_category || '',
-        unit: initialData.unit || '',
+        product_category: initialData.product_category || undefined,
+        unit: initialData.unit || undefined,
         critical_stock_level: initialData.critical_stock_level?.toString() || '',
         brand: initialData.brand || '',
         is_active: initialData.is_active ?? true

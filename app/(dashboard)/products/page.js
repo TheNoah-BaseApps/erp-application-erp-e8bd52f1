@@ -21,8 +21,8 @@ export default function ProductsPage() {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
-    category: '',
-    brand: '',
+    category: 'all',
+    brand: 'all',
     status: 'all'
   });
   const [showBulkUpload, setShowBulkUpload] = useState(false);
@@ -75,11 +75,11 @@ export default function ProductsPage() {
       );
     }
 
-    if (filters.category) {
+    if (filters.category && filters.category !== 'all') {
       filtered = filtered.filter(p => p.product_category === filters.category);
     }
 
-    if (filters.brand) {
+    if (filters.brand && filters.brand !== 'all') {
       filtered = filtered.filter(p => p.brand === filters.brand);
     }
 
@@ -168,7 +168,7 @@ export default function ProductsPage() {
               <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
               <h3 className="text-lg font-medium mb-2">No products found</h3>
               <p className="text-gray-600 mb-4">
-                {searchQuery || filters.category || filters.brand
+                {searchQuery || (filters.category !== 'all') || (filters.brand !== 'all')
                   ? 'Try adjusting your filters or search query'
                   : 'Get started by adding your first product'}
               </p>
